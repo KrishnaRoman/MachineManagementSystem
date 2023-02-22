@@ -1,5 +1,5 @@
 import {useMemo, useState} from 'react';
-import {postQuery} from '../helpers/postQueries';
+import {postQuery} from '../../helpers/postQueries';
 
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -80,7 +80,7 @@ export const InsertModalMachineTypes = ({getTypes}) => {
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >
-                <h1> Nuevo evento </h1>
+                <h1> Insert Machine Type </h1>
                 <hr />
                 <form className="container" onSubmit={ onSubmit }>
 
@@ -99,7 +99,7 @@ export const InsertModalMachineTypes = ({getTypes}) => {
                         className="btn btn-outline-primary btn-block"
                     >
                         <i className="far fa-save"></i>
-                        <span> Guardar</span>
+                        <span> Save </span>
                     </button>
 
                 </form>

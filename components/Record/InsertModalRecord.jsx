@@ -1,5 +1,5 @@
-import {useMemo, useState} from 'react';
-import {postQuery} from '../helpers/postQueries';
+import {useMemo, useState, useEffect} from 'react';
+import {postQuery} from '../../helpers/postQueries';
 
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -56,6 +56,43 @@ export const InsertModalRecord = ({getRecord}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
+    const [machine, setMachine] = useState([]);
+    const [maintenance, setMaintenance] = useState([]);
+
+    const getMachines = async() => {
+        const {machines} = await postQuery({
+            query: `query show_machine {
+                machines(where: {deleted: {_eq: false}}) {
+                  id
+                  location
+                  operationStartDate
+                  type
+                  deleted
+                }
+              }`
+        });
+        setMachine(machines);
+    }
+
+    const getMaintenances = async() => {
+        const {maintenances} = await postQuery({
+            query: `query show_maintenances {
+                maintenances(where: {deleted: {_eq: false}}) {
+                  id
+                  machineType
+                  frequency
+                  type
+                  deleted
+                }
+              }`
+        });
+        setMaintenance(maintenances);
+    }
+
+    useEffect(() => {
+        getMachines();
+        getMaintenances();
+    }, [])
     
     const [formValues, setFormValues] = useState({
         id: '',
@@ -119,6 +156,8 @@ export const InsertModalRecord = ({getRecord}) => {
 
     const onOpenModal = () => {
         setIsOpen(true);
+        getMachines();
+        getMaintenances();
     }
 
     const onCloseModal = () => {
@@ -147,17 +186,7 @@ export const InsertModalRecord = ({getRecord}) => {
             setFormSubmitted(true);
         }
     }
-`query show_record {
-    controlMaintenanceRecord {
-      id
-      date
-      status
-      machineId
-      managerId
-      observation
-      maintenanceId
-    }
-  }`
+
     return (
         <>
             <button onClick={ onOpenModal } type="button">Add</button>
@@ -166,7 +195,7 @@ export const InsertModalRecord = ({getRecord}) => {
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >
-                <h1> Nuevo evento </h1>
+                <h1> Insert Record </h1>
                 <hr />
                 <form className="container" onSubmit={ onSubmit }>
 
@@ -192,22 +221,32 @@ export const InsertModalRecord = ({getRecord}) => {
 
                     <div className="form-group mb-2">
                         <label>Status</label>
-                        <input
+                        <select 
                             className={`form-control ${statusClass}`}
                             name = "status"
-                            value = { formValues.status }
-                            onChange={ onInputChanged }
-                        />
+                            value={ formValues.status }
+                            onChange={onInputChanged}>
+                            <option value={""}></option>
+                            <option value={"Done"}>Done</option>
+                            <option value={"To do"}>To do</option>
+                            <option value={"In progress"}>In progress</option>
+                        </select>
                     </div>
 
                     <div className="form-group mb-2">
                         <label>MachineId</label>
-                        <input
+                        <select 
                             className={`form-control ${machineIdClass}`}
                             name = "machineId"
-                            value = { formValues.machineId }
-                            onChange={ onInputChanged }
-                        />
+                            value={ formValues.machineId }
+                            onChange={onInputChanged}>
+                            <option value={""}></option>
+                            {
+                                machine.map( machine => (
+                                    <option key={machine.id} value={machine.id}>{machine.id}</option>
+                                ))
+                            }
+                        </select>
                     </div>
 
                     <div className="form-group mb-2">
@@ -222,12 +261,18 @@ export const InsertModalRecord = ({getRecord}) => {
 
                     <div className="form-group mb-2">
                         <label>MaintenanceId</label>
-                        <input
+                        <select 
                             className={`form-control ${maintenanceIdClass}`}
                             name = "maintenanceId"
-                            value = { formValues.maintenanceId }
-                            onChange={ onInputChanged }
-                        />
+                            value={ formValues.maintenanceId }
+                            onChange={onInputChanged}>
+                            <option value={""}></option>
+                            {
+                                maintenance.map( maintenance => (
+                                    <option key={maintenance.id} value={maintenance.id}>{maintenance.id}</option>
+                                ))
+                            }
+                        </select>
                     </div>
 
                     <div className="form-group mb-2">
@@ -245,7 +290,7 @@ export const InsertModalRecord = ({getRecord}) => {
                         className="btn btn-outline-primary btn-block"
                     >
                         <i className="far fa-save"></i>
-                        <span> Guardar</span>
+                        <span> Save </span>
                     </button>
 
                 </form>

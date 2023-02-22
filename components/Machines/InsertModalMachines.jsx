@@ -1,5 +1,5 @@
-import {useMemo, useState} from 'react';
-import {postQuery} from '../helpers/postQueries';
+import {useMemo, useState, useEffect} from 'react';
+import {postQuery} from '../../helpers/postQueries';
 
 import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
@@ -53,7 +53,23 @@ export const InsertModalMachines = ({getMachines}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
+    const [type, setType] = useState([]);
     
+    const getTypes = async() => {
+        const {machineType} = await postQuery({
+            query: `query show_types {
+                machineType(where: {deleted: {_eq: false}}) {
+                  name
+                }
+              }`
+        });
+        setType(machineType);
+    }
+
+    useEffect(() => {
+        getTypes();
+    }, [])
+
     const [formValues, setFormValues] = useState({
         id: '',
         type: '',
@@ -95,6 +111,7 @@ export const InsertModalMachines = ({getMachines}) => {
 
     const onOpenModal = () => {
         setIsOpen(true);
+        getTypes();
     }
 
     const onCloseModal = () => {
@@ -110,10 +127,9 @@ export const InsertModalMachines = ({getMachines}) => {
 
     const onSubmit = async event  => {
         event.preventDefault();
-
         const result = await postMachine(formValues);
         if(result && result.insert_machines.affected_rows === 1){
-            getMachines()
+            getMachines();
             onCloseModal();
         } else {
             Swal.fire('Insert error', 'Please check all fields are correct', 'Please check all fields are correct');
@@ -129,7 +145,7 @@ export const InsertModalMachines = ({getMachines}) => {
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >
-                <h1> Nuevo evento </h1>
+                <h1> Insert Machine </h1>
                 <hr />
                 <form className="container" onSubmit={ onSubmit }>
 
@@ -141,17 +157,22 @@ export const InsertModalMachines = ({getMachines}) => {
                             value = { formValues.id }
                             onChange={ onInputChanged }
                         />
-
                     </div>
 
                     <div className="form-group mb-2">
                         <label>Type</label>
-                        <input
+                        <select
                             className={`form-control ${typeClass}`}
-                            name = "type"
-                            value = { formValues.type }
-                            onChange={ onInputChanged }
-                        />
+                            name="type"
+                            value={ formValues.machineType}
+                            onChange={ onInputChanged }>
+                            <option value={""}></option>
+                            {
+                                type.map( type => (
+                                    <option key={type.name} value={type.name}>{type.name}</option>
+                                ))
+                            }
+                        </select>
                     </div>
 
                     <div className="form-group mb-2">
@@ -178,7 +199,7 @@ export const InsertModalMachines = ({getMachines}) => {
                         className="btn btn-outline-primary btn-block"
                     >
                         <i className="far fa-save"></i>
-                        <span> Guardar</span>
+                        <span> Save </span>
                     </button>
 
                 </form>

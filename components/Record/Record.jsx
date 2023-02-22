@@ -1,18 +1,20 @@
 import {useEffect, useState} from 'react';
-import {postQuery} from '../helpers/postQueries';
+import {postQuery} from '../../helpers/postQueries';
 import { InsertModalRecord } from './InsertModalRecord';
 
-import Swal from 'sweetalert2';
+//import Swal from 'sweetalert2';
 import 'sweetalert2/dist/sweetalert2.min.css';
+import { DeleteRecord } from './DeleteRecord';
 
 export const Record = () => {
 
+    const [deleted, setDeleted] = useState(false);
     const [record, setRecord] = useState([]);
 
     const getRecord = async() => {
         const {controlMaintenanceRecord} = await postQuery({
             query: `query show_record {
-                controlMaintenanceRecord {
+                controlMaintenanceRecord(where: {deleted: {_eq: ${deleted}}}) {
                   id
                   date
                   status
@@ -20,6 +22,7 @@ export const Record = () => {
                   managerId
                   observation
                   maintenanceId
+                  deleted
                 }
               }`
         });
@@ -28,28 +31,30 @@ export const Record = () => {
 
     useEffect(() => {
         getRecord();
-    }, [])
+    }, [deleted])
 
-    const delRecord = async(id) => {
+    const delRecord = async(id, deleted) => {
         const result = await postQuery({
-            query: `mutation del_record {
-                delete_controlMaintenanceRecord(where: {id: {_eq: ${id}}}){
+            query: `mutation toggleRecord {
+                update_controlMaintenanceRecord(where: {id: {_eq: ${id}}}, _set: {deleted: ${!deleted}}) {
                   affected_rows
                 }
               }`
         });
-        if (result && result.delete_controlMaintenanceRecord.affected_rows === 1){
-            const newRecordList = record.filter( element => element.id !== id);
-            setRecord(newRecordList);
-        }else{
-            Swal.fire('Delete error', 'There was an error deleting that record', 'There was an error deleting that record');
-        }
+        const newRecordList = record.filter( element => element.id !== id);
+        setRecord(newRecordList);
+    }
+
+    const handleDeleted = () => {
+        setDeleted(!deleted)
     }
 
     return (
         <>
             <h3 style={{margin: "50px 0px 0px"}}>Control/Maintenance Record</h3>
             <InsertModalRecord getRecord={getRecord} />
+            <label> Deleted </label>
+            <input type="checkbox" checked={deleted} onChange={handleDeleted}/>
             <div>
                 {
                     <table align='center' width='100%'>
@@ -76,9 +81,7 @@ export const Record = () => {
                                         <td> {record.managerId} </td>
                                         <td> {record.maintenanceId} </td>
                                         <td> {record.observation} </td>
-                                        <td>
-                                            <button onClick={() => delRecord(record.id)} type="button">Delete</button>
-                                        </td>
+                                        <DeleteRecord id={record.id} deleted={record.deleted} delRecord={delRecord}/>
                                     </tr>
                                 ))
                             }
