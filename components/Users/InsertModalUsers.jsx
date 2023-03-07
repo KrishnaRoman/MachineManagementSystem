@@ -19,6 +19,7 @@ const customStyles = {
 
 const registerUser = async(formValues) => {
 
+    formValues.email = formValues.email.replace(/\s/g,'');
     try {
         return axios({
             url: 'http://localhost:3000/auth/register', 
@@ -30,7 +31,6 @@ const registerUser = async(formValues) => {
             },
             data: JSON.stringify(formValues)
         }).then(response => {
-            console.log(response);
             return response.data;
         })
     } catch (error) {
@@ -80,15 +80,16 @@ export const InsertModalUsers = ({insertUsers, setInsertUsers, getUsers}) => {
 
     const onSubmit = async event  => {
         event.preventDefault();
-
         try {
+            if(formValues.email.replace(/\s/g,'') === ''){
+                setFormValues({...formValues, email: ''});
+                throw Error("Email field is empty")
+            }
             const result = await registerUser(formValues);
-            console.log(result);
             await onCloseModal();
             
         } catch (error) {
-            Swal.fire('Insert error', 'Please check all fields are correct', 'Please check all fields are correct');
-            
+            Swal.fire('Insert error', 'Please check all fields are correct', 'error');            
         }
     }
 

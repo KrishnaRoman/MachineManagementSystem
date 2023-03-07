@@ -16,27 +16,10 @@ export const FirstApp = () => {
     let navigate = useNavigate();
 
     const token = getLocalVariable('token');
-    // const allowedRoles = getLocalVariable('allowed_roles').split(",");
     const defaultRole = getLocalVariable('default_role');
     const username = getLocalVariable('username');
-    // allowedRoles.push(getLocalVariable('default_role'));
-
-    // const userRoles = allowedRoles.map(role => {
-    //     if(role === "admin"){
-    //         return "  Admin"
-    //     }else if(role === "admin_jr_1"){
-    //         return "  Admin Jr 1"
-    //     }else if(role === "admin_jr_2"){
-    //         return "  Admin Jr 2"
-    //     }else if(role === "manager"){
-    //         return "  Manager"
-    //     }else if(role === "reporter"){
-    //         return "  Reporter"
-    //     }
-    // })
 
     const handleLogout = () => {
-        console.log("logued out");
         localStorage.removeItem('token')
         localStorage.removeItem('username')
         localStorage.removeItem('default_role')
@@ -57,11 +40,6 @@ export const FirstApp = () => {
         </div> 
         <div>User: {username}</div>
         <div>Roles: {defaultRole}</div>
-        {/* <Users token={token} canWrite={allowedRoles.includes("admin") || allowedRoles.includes("admin_jr_1")}/>
-        <Machines token={token} canWrite={allowedRoles.includes("admin") || allowedRoles.includes("admin_jr_2")}/>
-        <MachineTypes  token={token} canWrite={allowedRoles.includes("admin") || allowedRoles.includes("admin_jr_2")}/>
-        <Record  token={token} canWrite={allowedRoles.includes("admin") || allowedRoles.includes("manager")}/>
-        <Maintenances  token={token} canWrite={allowedRoles.includes("admin") || allowedRoles.includes("manager")}/> */}
 
         {
             (defaultRole === "admin" || defaultRole === "admin_jr_1" || defaultRole === "reporter") ? <Users token={token} defaultRole={defaultRole}/> : ''

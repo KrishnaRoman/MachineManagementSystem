@@ -56,7 +56,7 @@ export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenan
     const getFrequencies = async() => {
         const response = await postQuery({
             query: `query show_frequencies {
-                frequencies(order_by: {id: asc}, where: {deleted: {_eq: false}}) {
+                frequencies(order_by: {frequency: asc}, where: {deleted: {_eq: false}}) {
                   frequency
                 }
               }`
@@ -137,7 +137,7 @@ export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenan
             getMaintenances();
             onCloseModal();
         } else {
-            Swal.fire('Insert error', 'Please check all fields are correct', 'Please check all fields are correct');
+            Swal.fire('Insert error', 'Please check all fields are correct', 'error');
             setFormSubmitted(true);
         }
     }

@@ -134,7 +134,7 @@ export const InsertModalMachines = ({getMachines, token, insertMachine, setInser
             getMachines();
             onCloseModal();
         } else {
-            Swal.fire('Insert error', 'Please check all fields are correct', 'Please check all fields are correct');
+            Swal.fire('Insert error', 'Please check all fields are correct', 'error');
             setFormSubmitted(true);
         }
     }
