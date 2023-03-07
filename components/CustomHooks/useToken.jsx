@@ -10,7 +10,7 @@ export default function useToken() {
 
   const saveToken = userToken => {
     localStorage.setItem('token', userToken.token);
-    localStorage.setItem('allowed_roles', userToken.allowed_roles);
+    // localStorage.setItem('allowed_roles', userToken.allowed_roles);
     localStorage.setItem('default_role', userToken.default_role);
     localStorage.setItem('username', userToken.username);
     setToken(userToken.token);

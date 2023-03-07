@@ -33,7 +33,7 @@ function formatDate(date) {
     return [year, month, day].join('/');
 }
 
-const postMachine = async({id, type, location, operationStartDate}, token) => {
+const postMachine = async({id, type, location, operationStartDate}, token, defaultRole) => {
     const query = `mutation machine{
         insert_machines(
             objects: [{${ id ? `id: ${id},` : ""}
@@ -43,13 +43,13 @@ const postMachine = async({id, type, location, operationStartDate}, token) => {
           affected_rows
         }
       }`
-    const result = await postQuery({query}, token);
+    const result = await postQuery({query}, token, defaultRole);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMachines = ({getMachines, token, insertMachine, setInsertMachine}) => {
+export const InsertModalMachines = ({getMachines, token, insertMachine, setInsertMachine, defaultRole}) => {
 
     // const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
@@ -58,12 +58,13 @@ export const InsertModalMachines = ({getMachines, token, insertMachine, setInser
     const getTypes = async() => {
         const response = await postQuery({
             query: `query show_types {
-                machineType(where: {deleted: {_eq: false}}) {
+                machineType(order_by: {name: asc}, where: {deleted: {_eq: false}}) {
                   name
                 }
               }`
         },
-        token);
+        token,
+        defaultRole);
         setType(response?.machineType || []);
     }
 
@@ -128,7 +129,7 @@ export const InsertModalMachines = ({getMachines, token, insertMachine, setInser
 
     const onSubmit = async event  => {
         event.preventDefault();
-        const result = await postMachine(formValues, token);
+        const result = await postMachine(formValues, token, defaultRole);
         if(result && result.insert_machines.affected_rows === 1){
             getMachines();
             onCloseModal();

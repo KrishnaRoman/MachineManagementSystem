@@ -18,19 +18,19 @@ const customStyles = {
 };
 
 
-const postMachineType = async(name, token) => {
+const postMachineType = async(name, token, defaultRole) => {
     const query = `mutation machineType {
         insert_machineType(objects: [{name: "${name}"}]) {
           affected_rows
         }
       }`
-    const result = await postQuery({ query }, token);
+    const result = await postQuery({ query }, token, defaultRole);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMachineTypes = ({getTypes, token, insertMachineType, setInsertMachineType}) => {
+export const InsertModalMachineTypes = ({getTypes, token, insertMachineType, setInsertMachineType, defaultRole}) => {
 
     // const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
@@ -62,7 +62,7 @@ export const InsertModalMachineTypes = ({getTypes, token, insertMachineType, set
 
     const onSubmit = async event => {
         event.preventDefault();
-        const result = await postMachineType(formValues, token);
+        const result = await postMachineType(formValues, token, defaultRole);
         if(result && result.insert_machineType.affected_rows === 1){
             getTypes();
             onCloseModal();

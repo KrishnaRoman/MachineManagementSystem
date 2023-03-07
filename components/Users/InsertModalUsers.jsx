@@ -1,5 +1,4 @@
-import {useMemo, useState, useEffect} from 'react';
-import {postQuery} from '../../helpers/postQueries';
+import {useState} from 'react';
 import axios from 'axios';
 
 import Swal from 'sweetalert2';
@@ -20,18 +19,6 @@ const customStyles = {
 
 const registerUser = async(formValues) => {
 
-    let allowedRoles = '';
-    for (let i = 0; i < formValues.allowed_roles.length; i++) {
-        if(i+1 === formValues.allowed_roles.length){
-            allowedRoles += formValues.allowed_roles[i];
-        }else{
-            allowedRoles = allowedRoles + formValues.allowed_roles[i] + ",";
-        }
-    }
-    formValues.allowed_roles = allowedRoles;
-
-    console.log(formValues.allowed_roles);
-
     try {
         return axios({
             url: 'http://localhost:3000/auth/register', 
@@ -49,7 +36,6 @@ const registerUser = async(formValues) => {
     } catch (error) {
         return {}
     }
-    // console.log(formValues)
 }
 
 Modal.setAppElement('#root');
@@ -63,58 +49,21 @@ export const InsertModalUsers = ({insertUsers, setInsertUsers, getUsers}) => {
         manager: "Manager",
         reporter: "Reporter",
     }
-
-    const [checkedRoles, setCheckedRoles] = useState({
-        admin: false,
-        admin_jr_1: false,
-        admin_jr_2: false,
-        manager: false,
-        reporter: false,
-    })
     
     const [formValues, setFormValues] = useState({
         username: '',
         email: '',
         password: '',
         phone: '',
-        allowed_roles: [],
         default_role: ''
     })
 
 
     const onInputChanged = ({ target }) => {
-        if(target.name === "default_role"){
-            setCheckedRoles({...checkedRoles, [target.value]: true})
-            if(!checkedRoles[target.value]){
-                setFormValues({...formValues, [target.name]: target.value, allowed_roles: [...formValues.allowed_roles, target.value]})
-            }else{
-                setFormValues({
-                    ...formValues,
-                    [target.name]: target.value
-                })
-            }
-        }else{
-            setFormValues({
-                ...formValues,
-                [target.name]: target.value
-            })
-        }
-    }
-
-    const onCheckedChange = ({ target }) => {
-        setCheckedRoles({...checkedRoles, [target.name]: target.checked})
-        if(formValues.allowed_roles.length === 0){
-            setFormValues({...formValues, allowed_roles: [target.name]})
-        }else if(target.checked) {
-            setFormValues({...formValues, allowed_roles: [...formValues.allowed_roles, target.name]})
-        }else {
-            const newSelectedRoles = formValues.allowed_roles.filter(role => role !== target.name);
-            if(formValues.default_role === target.name){
-                setFormValues({...formValues, default_role: "", allowed_roles: newSelectedRoles})
-            }else{
-                setFormValues({...formValues, allowed_roles: newSelectedRoles})
-            }
-        }
+        setFormValues({
+            ...formValues,
+            [target.name]: target.value
+        })
     }
 
     const onCloseModal = async () => {
@@ -123,15 +72,7 @@ export const InsertModalUsers = ({insertUsers, setInsertUsers, getUsers}) => {
             email: '',
             password: '',
             phone: '',
-            allowed_roles: [],
             default_role: ''
-        })
-        setCheckedRoles({
-            admin: false,
-            admin_jr_1: false,
-            admin_jr_2: false,
-            manager: false,
-            reporter: false,
         })
         setInsertUsers(false);
         await getUsers()
@@ -149,9 +90,6 @@ export const InsertModalUsers = ({insertUsers, setInsertUsers, getUsers}) => {
             Swal.fire('Insert error', 'Please check all fields are correct', 'Please check all fields are correct');
             
         }
-        // if(result && result.token){
-        // } else {
-        // }
     }
 
     return (
@@ -226,41 +164,6 @@ export const InsertModalUsers = ({insertUsers, setInsertUsers, getUsers}) => {
                                 ))
                             }
                         </select>
-                    </div>
-
-                    <div className="form-group mb-2">
-                        <label>Allowed Roles</label>
-                        {
-                            Object.keys(roles).map(role => (
-                                // <option value={role}>roles[role]</option>
-                                <div key={role}>
-                                    <input
-                                        type="checkbox"
-                                        checked={checkedRoles[role]}
-                                        name = {role}
-                                        onChange={ onCheckedChange }
-                                    /> {roles[role]}
-                                </div>
-                            ))
-                        }
-
-                        
-                        {/* <select 
-                            className={`form-control`}
-                            name = "default_role"
-                            value={ formValues.default_role }
-                            onChange={onInputChanged}>
-                            <option value={""}></option>
-                            {
-                                Object.keys(roles).map(role => {
-                                    <option value={role}>roles[role]</option>
-                                })
-                            }
-                            <option value={"admin_jr_1"}>Admin Jr 1</option>
-                            <option value={"admin_jr_1"}>Admin Jr 2</option>
-                            <option value={"manager"}>Manager</option>
-                            <option value={"reporter"}>Reporter</option>
-                        </select> */}
                     </div>
 
                    <button

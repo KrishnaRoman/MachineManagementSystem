@@ -3,8 +3,9 @@ import {postQuery} from '../../helpers/postQueries';
 import { DeleteMaintenances } from './DeleteMaintenances';
 import { InsertModalMaintenances } from './InsertModalMaintenances';
 
-export const Maintenances = ({token, canWrite}) => {
+export const Maintenances = ({token, defaultRole}) => {
 
+    const canWrite = defaultRole === 'manager' || defaultRole === 'admin';
     const [deleted, setDeleted] = useState(false);
     const [maintenance, setMaintenance] = useState([]);
     const [insertMaintenances, setInsertMaintenances] = useState(false);
@@ -12,7 +13,7 @@ export const Maintenances = ({token, canWrite}) => {
     const getMaintenances = async() => {
         const response = await postQuery({
             query: `query show_maintenances {
-                maintenances(where: {deleted: {_eq: ${deleted}}}) {
+                maintenances(order_by: {id: asc}, where: {deleted: {_eq: ${deleted}}}) {
                   id
                   machineType
                   frequency
@@ -21,7 +22,8 @@ export const Maintenances = ({token, canWrite}) => {
                 }
               }`
         },
-        token);
+        token,
+        defaultRole);
         setMaintenance(response?.maintenances || []);
     }
 
@@ -37,7 +39,8 @@ export const Maintenances = ({token, canWrite}) => {
                 }
               }`
         },
-        token);
+        token,
+        defaultRole);
         const newMaintenanceList = maintenance.filter( element => element.id !== id );
         setMaintenance(newMaintenanceList);
     }
@@ -53,7 +56,7 @@ export const Maintenances = ({token, canWrite}) => {
               canWrite ? <button onClick={ () => { setInsertMaintenances(!insertMaintenances)} } type="button">Add</button> : ''
             }
             {
-                insertMaintenances ? <InsertModalMaintenances getMaintenances={getMaintenances} token={token} insertMaintenances={insertMaintenances} setInsertMaintenances={setInsertMaintenances}/> : ''
+                insertMaintenances ? <InsertModalMaintenances getMaintenances={getMaintenances} token={token} insertMaintenances={insertMaintenances} setInsertMaintenances={setInsertMaintenances} defaultRole={defaultRole}/> : ''
             }
             <label> Deleted </label>
             <input type="checkbox" checked={deleted} onChange={handleDeleted}/>
@@ -66,7 +69,9 @@ export const Maintenances = ({token, canWrite}) => {
                                 <th> MaintenanceType </th>
                                 <th> MachineType </th>
                                 <th> Frequency </th>
-                                <th> Delete </th>
+                                {
+                                    canWrite ? <th> Delete </th> : ''
+                                }
                             </tr>
                         </thead>
                         <tbody>
@@ -77,7 +82,9 @@ export const Maintenances = ({token, canWrite}) => {
                                         <td> {maintenance.type} </td>
                                         <td> {maintenance.machineType} </td>
                                         <td> {maintenance.frequency} </td>
-                                        <DeleteMaintenances id={maintenance.id} deleted={maintenance.deleted} delMaintenance={delMaintenance} token={token}/>
+                                        {
+                                            canWrite ? <DeleteMaintenances id={maintenance.id} deleted={maintenance.deleted} delMaintenance={delMaintenance} token={token} defaultRole={defaultRole}/> : ''
+                                        }
                                     </tr>
                                 ))
                             }

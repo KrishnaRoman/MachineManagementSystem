@@ -33,52 +33,50 @@ function formatDate(date) {
     return [year, month, day].join('/');
 }
 
-const postRecord = async({id, date, status, machineId, managerId, observation, maintenanceId}, token) => {
+const postRecord = async({id, date, status, machineId, manager_id, observation, maintenanceId}, token, defaultRole) => {
     const query = `mutation ctrlMaintenanceRec {
         insert_controlMaintenanceRecord(
             objects: [{${ id ? `id: ${id},` : ""}
             date: "${formatDate(date)}",
             status: "${status}", 
             machineId: "${machineId}",
-            managerId: "${managerId}",
+            manager_id: "${manager_id}",
             maintenanceId: "${maintenanceId}",
             observation: "${observation}"}]) {
           affected_rows
         }
       }`
-    const result = await postQuery({query}, token);
+    const result = await postQuery({query}, token, defaultRole);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertRecord}) => {
+export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertRecord, defaultRole}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     const [machine, setMachine] = useState([]);
     const [maintenance, setMaintenance] = useState([]);
+    const [managerIds, setManagerIds] = useState([]);
 
-    const getMachines = async(token) => {
+    const getMachines = async() => {
         const response = await postQuery({
             query: `query show_machine {
-                machines(where: {deleted: {_eq: false}}) {
+                machines(order_by: {id: asc}, where: {deleted: {_eq: false}}) {
                   id
-                  location
-                  operationStartDate
-                  type
-                  deleted
                 }
               }`
         }, 
-        token);
+        token,
+        defaultRole);
         setMachine(response?.machines || []);
     }
 
-    const getMaintenances = async(token) => {
+    const getMaintenances = async() => {
         const response = await postQuery({
             query: `query show_maintenances {
-                maintenances(where: {deleted: {_eq: false}}) {
+                maintenances(order_by: {id: asc}, where: {deleted: {_eq: false}}) {
                   id
                   machineType
                   frequency
@@ -87,13 +85,28 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
                 }
               }`
         }, 
-        token);
+        token,
+        defaultRole);
         setMaintenance(response?.maintenances || []);
     }
 
+    const getManagerIds = async() => {
+        const response = await postQuery({
+            query: `query get_users {
+                user(order_by: {id: asc}, where: {_and: {default_role: {_eq: "manager"}, deleted: {_eq: false}}}) {
+                  id
+                }
+              }`
+        },
+        token,
+        defaultRole);
+        setManagerIds(response?.user || []);
+    }
+
     useEffect(() => {
-        getMachines(token);
-        getMaintenances(token);
+        getMachines();
+        getMaintenances();
+        getManagerIds();
     }, [])
     
     const [formValues, setFormValues] = useState({
@@ -101,7 +114,7 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
         date: new Date(),
         status: '',
         machineId: '',
-        managerId: '',
+        manager_id: '',
         maintenanceId: '',
         observation: '',
     })
@@ -127,11 +140,11 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
     const managerIdClass = useMemo(() => {
         if (!formSubmitted) return '';
 
-        return (formValues.managerId.length > 0)
+        return (formValues.manager_id.length > 0)
             ? 'is-valid'
             : 'is-invalid';
 
-    }, [ formValues.managerId, formSubmitted ])
+    }, [ formValues.manager_id, formSubmitted ])
 
     const maintenanceIdClass = useMemo(() => {
         if (!formSubmitted) return '';
@@ -169,7 +182,7 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
             date: new Date(),
             status: '',
             machineId: '',
-            managerId: '',
+            manager_id: '',
             maintenanceId: '',
             observation: '',
         })
@@ -179,7 +192,7 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
     const onSubmit = async event  => {
         event.preventDefault();
 
-        const result = await postRecord(formValues, token);
+        const result = await postRecord(formValues, token, defaultRole);
         if(result && result.insert_controlMaintenanceRecord.affected_rows === 1){
             getRecord()
             onCloseModal();
@@ -251,7 +264,7 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
                         </select>
                     </div>
 
-                    <div className="form-group mb-2">
+                    {/* <div className="form-group mb-2">
                         <label>ManagerId</label>
                         <input
                             className={`form-control ${managerIdClass}`}
@@ -259,6 +272,22 @@ export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertReco
                             value = { formValues.managerId }
                             onChange={ onInputChanged }
                         />
+                    </div> */}
+
+                    <div className="form-group mb-2">
+                        <label>ManagerId</label>
+                        <select 
+                            className={`form-control ${managerIdClass}`}
+                            name = "manager_id"
+                            value={ formValues.manager_id }
+                            onChange={onInputChanged}>
+                            <option value={""}></option>
+                            {
+                                managerIds.map( manager => (
+                                    <option key={manager.id} value={manager.id}>{manager.id}</option>
+                                ))
+                            }
+                        </select>
                     </div>
 
                     <div className="form-group mb-2">

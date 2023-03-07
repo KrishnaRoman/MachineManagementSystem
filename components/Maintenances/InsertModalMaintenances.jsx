@@ -17,7 +17,7 @@ const customStyles = {
     },
 };
 
-const postMaintenance = async({id, machineType, frequency, type}, token) => {
+const postMaintenance = async({id, machineType, frequency, type}, token, defaultRole) => {
     const query = `mutation maintenances{
         insert_maintenances(
             objects: [{${ id ? `id: ${id},` : ""}
@@ -27,46 +27,48 @@ const postMaintenance = async({id, machineType, frequency, type}, token) => {
           affected_rows
         }
       }`
-    const result = await postQuery({query}, token);
+    const result = await postQuery({query}, token, defaultRole);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenances, setInsertMaintenances}) => {
+export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenances, setInsertMaintenances, defaultRole}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     const [type, setType] = useState([]);
     const [frequency, setFrequency] = useState([]);
 
-    const getTypes = async(token) => {
+    const getTypes = async() => {
         const response = await postQuery({
             query: `query show_types {
-                machineType(where: {deleted: {_eq: false}}) {
+                machineType(order_by: {name: asc}, where: {deleted: {_eq: false}}) {
                   name
                 }
               }`
         },
-        token);
+        token,
+        defaultRole);
         setType(response?.machineType || []);
     }
 
     const getFrequencies = async() => {
         const response = await postQuery({
             query: `query show_frequencies {
-                frequencies(where: {deleted: {_eq: false}}) {
+                frequencies(order_by: {id: asc}, where: {deleted: {_eq: false}}) {
                   frequency
                 }
               }`
         },
-        token);
+        token,
+        defaultRole);
         setFrequency(response?.frequencies || []);
     }
 
     useEffect(() => {
-        getTypes(token);
-        getFrequencies(token);
+        getTypes();
+        getFrequencies();
     }, [])
     
     const [formValues, setFormValues] = useState({
@@ -130,7 +132,7 @@ export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenan
     const onSubmit = async event  => {
         event.preventDefault();
 
-        const result = await postMaintenance(formValues, token);
+        const result = await postMaintenance(formValues, token, defaultRole);
         if(result && result.insert_maintenances.affected_rows === 1){
             getMaintenances();
             onCloseModal();
