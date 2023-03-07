@@ -5,35 +5,38 @@ import { InsertModalMachineTypes } from './InsertModalMachineTypes';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { DeleteMachineTypes } from './DeleteMachineTypes';
 
-export const MachineTypes = () => {
+export const MachineTypes = ({token, canWrite}) => {
 
     const [deleted, setDeleted] = useState(false);
     const [type, setType] = useState([]);
+    const [insertMachineType, setInsertMachineType] = useState(false);
 
     const getTypes = async() => {
-        const {machineType} = await postQuery({
+        const response = await postQuery({
             query: `query show_types {
                 machineType(where: {deleted: {_eq: ${deleted}}}) {
                   name
                   deleted
                 }
               }`
-        });
-        setType(machineType);
+        },
+        token);
+        setType(response?.machineType || []);
     }
 
     useEffect(() => {
         getTypes();
     }, [deleted])
 
-    const delType = async(name, deleted) => {
+    const delType = async(name, deleted, token) => {
         const result = await postQuery({
             query: `mutation toggleType {
                 update_machineType(where: {name: {_eq: "${name}"}}, _set: {deleted: ${!deleted}}) {
                         affected_rows
                     }
                 }`
-        });
+        },
+        token);
         const newTypeList = type.filter( element => element.name !== name );
         setType(newTypeList);
     }
@@ -45,7 +48,12 @@ export const MachineTypes = () => {
     return (
         <>
             <h3 style={{margin: "50px 0px 0px"}}>Machine Types</h3>
-            <InsertModalMachineTypes getTypes={getTypes} />
+            {
+              canWrite ? <button onClick={ () => { setInsertMachineType(!insertMachineType)} } type="button">Add</button> : ''
+            }
+            {
+                insertMachineType ? <InsertModalMachineTypes getTypes={getTypes} token={token} insertMachineType={insertMachineType} setInsertMachineType={setInsertMachineType}/> : ''
+            }
             <label> Deleted </label>
             <input type="checkbox" checked={deleted} onChange={handleDeleted}/>
             <div>
@@ -62,7 +70,7 @@ export const MachineTypes = () => {
                                 type.map( type => (
                                     <tr key={type.name}>
                                         <td> {type.name} </td>
-                                        <DeleteMachineTypes name={type.name} deleted={type.deleted} delType={delType}/>
+                                        <DeleteMachineTypes name={type.name} deleted={type.deleted} delType={delType} token={token}/>
                                         {/* <td>
                                             <button onClick={() => delType(type.name)} type="button">Delete</button>
                                         </td> */}

@@ -17,7 +17,7 @@ const customStyles = {
     },
 };
 
-const postMaintenance = async({id, machineType, frequency, type}) => {
+const postMaintenance = async({id, machineType, frequency, type}, token) => {
     const query = `mutation maintenances{
         insert_maintenances(
             objects: [{${ id ? `id: ${id},` : ""}
@@ -27,44 +27,46 @@ const postMaintenance = async({id, machineType, frequency, type}) => {
           affected_rows
         }
       }`
-    const result = await postQuery({query});
+    const result = await postQuery({query}, token);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMaintenances = ({getMaintenances}) => {
+export const InsertModalMaintenances = ({getMaintenances, token, insertMaintenances, setInsertMaintenances}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     const [type, setType] = useState([]);
     const [frequency, setFrequency] = useState([]);
 
-    const getTypes = async() => {
-        const {machineType} = await postQuery({
+    const getTypes = async(token) => {
+        const response = await postQuery({
             query: `query show_types {
                 machineType(where: {deleted: {_eq: false}}) {
                   name
                 }
               }`
-        });
-        setType(machineType);
+        },
+        token);
+        setType(response?.machineType || []);
     }
 
     const getFrequencies = async() => {
-        const {frequencies} = await postQuery({
+        const response = await postQuery({
             query: `query show_frequencies {
                 frequencies(where: {deleted: {_eq: false}}) {
                   frequency
                 }
               }`
-        });
-        setFrequency(frequencies);
+        },
+        token);
+        setFrequency(response?.frequencies || []);
     }
 
     useEffect(() => {
-        getTypes();
-        getFrequencies();
+        getTypes(token);
+        getFrequencies(token);
     }, [])
     
     const [formValues, setFormValues] = useState({
@@ -108,14 +110,14 @@ export const InsertModalMaintenances = ({getMaintenances}) => {
         })
     }
 
-    const onOpenModal = () => {
-        setIsOpen(true);
-        getTypes();
-        getFrequencies();
-    }
+    // const onOpenModal = () => {
+    //     setIsOpen(true);
+    //     getTypes(token);
+    //     getFrequencies(token);
+    // }
 
     const onCloseModal = () => {
-        setIsOpen(false);
+        setInsertMaintenances(false);
         setFormValues({
             id: '',
             machineType: '',
@@ -128,7 +130,7 @@ export const InsertModalMaintenances = ({getMaintenances}) => {
     const onSubmit = async event  => {
         event.preventDefault();
 
-        const result = await postMaintenance(formValues);
+        const result = await postMaintenance(formValues, token);
         if(result && result.insert_maintenances.affected_rows === 1){
             getMaintenances();
             onCloseModal();
@@ -140,9 +142,9 @@ export const InsertModalMaintenances = ({getMaintenances}) => {
 
     return (
         <>
-            <button onClick={ onOpenModal } type="button">Add</button>
+            {/* <button onClick={ onOpenModal } type="button">Add</button> */}
             <Modal
-                isOpen={isOpen}
+                isOpen={insertMaintenances}
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >

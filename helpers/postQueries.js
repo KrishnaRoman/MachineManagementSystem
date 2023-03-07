@@ -1,4 +1,4 @@
-export const postQuery = async(query) => {
+export const postQuery = async(query, token) => {
 
     const url = `https://pleasing-stag-47.hasura.app/v1/graphql`;
 
@@ -9,7 +9,8 @@ export const postQuery = async(query) => {
     credentials: 'same-origin',
     headers: {
         'content-Type': 'application/json',
-        'x-hasura-admin-secret': 'zbBHgSPKclNupJYEF3X3IHevWiTQHMRgeOrvyK8cfZ2c6BcdVtwaN3W6tV74DnD9',
+        'Authorization': token,
+        // 'x-hasura-admin-secret': 'zbBHgSPKclNupJYEF3X3IHevWiTQHMRgeOrvyK8cfZ2c6BcdVtwaN3W6tV74DnD9',
     },
     redirect: 'follow',
     referrerPolicy: 'no-referrer',

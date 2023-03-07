@@ -6,13 +6,14 @@ import { InsertModalRecord } from './InsertModalRecord';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { DeleteRecord } from './DeleteRecord';
 
-export const Record = () => {
+export const Record = ({token, canWrite}) => {
 
     const [deleted, setDeleted] = useState(false);
     const [record, setRecord] = useState([]);
+    const [insertRecord, setInsertRecord] = useState(false);
 
     const getRecord = async() => {
-        const {controlMaintenanceRecord} = await postQuery({
+        const response = await postQuery({
             query: `query show_record {
                 controlMaintenanceRecord(where: {deleted: {_eq: ${deleted}}}) {
                   id
@@ -25,22 +26,24 @@ export const Record = () => {
                   deleted
                 }
               }`
-        });
-        setRecord(controlMaintenanceRecord);
+        },
+        token);
+        setRecord(response?.controlMaintenanceRecord || []);
     }
 
     useEffect(() => {
         getRecord();
     }, [deleted])
 
-    const delRecord = async(id, deleted) => {
+    const delRecord = async(id, deleted, token) => {
         const result = await postQuery({
             query: `mutation toggleRecord {
                 update_controlMaintenanceRecord(where: {id: {_eq: ${id}}}, _set: {deleted: ${!deleted}}) {
                   affected_rows
                 }
               }`
-        });
+        },
+        token);
         const newRecordList = record.filter( element => element.id !== id);
         setRecord(newRecordList);
     }
@@ -52,7 +55,12 @@ export const Record = () => {
     return (
         <>
             <h3 style={{margin: "50px 0px 0px"}}>Control/Maintenance Record</h3>
-            <InsertModalRecord getRecord={getRecord} />
+            {
+              canWrite ? <button onClick={ () => { setInsertRecord(!insertRecord)} } type="button">Add</button> : ''
+            }
+            {
+                insertRecord ? <InsertModalRecord getRecord={getRecord} token={token} insertRecord={insertRecord} setInsertRecord={setInsertRecord}/> : ''
+            }
             <label> Deleted </label>
             <input type="checkbox" checked={deleted} onChange={handleDeleted}/>
             <div>
@@ -81,7 +89,7 @@ export const Record = () => {
                                         <td> {record.managerId} </td>
                                         <td> {record.maintenanceId} </td>
                                         <td> {record.observation} </td>
-                                        <DeleteRecord id={record.id} deleted={record.deleted} delRecord={delRecord}/>
+                                        <DeleteRecord id={record.id} deleted={record.deleted} delRecord={delRecord} token={token}/>
                                     </tr>
                                 ))
                             }

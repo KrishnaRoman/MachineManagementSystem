@@ -33,7 +33,7 @@ function formatDate(date) {
     return [year, month, day].join('/');
 }
 
-const postMachine = async({id, type, location, operationStartDate}) => {
+const postMachine = async({id, type, location, operationStartDate}, token) => {
     const query = `mutation machine{
         insert_machines(
             objects: [{${ id ? `id: ${id},` : ""}
@@ -43,27 +43,28 @@ const postMachine = async({id, type, location, operationStartDate}) => {
           affected_rows
         }
       }`
-    const result = await postQuery({query});
+    const result = await postQuery({query}, token);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMachines = ({getMachines}) => {
+export const InsertModalMachines = ({getMachines, token, insertMachine, setInsertMachine}) => {
 
-    const [ isOpen, setIsOpen ] = useState(false);
+    // const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     const [type, setType] = useState([]);
     
     const getTypes = async() => {
-        const {machineType} = await postQuery({
+        const response = await postQuery({
             query: `query show_types {
                 machineType(where: {deleted: {_eq: false}}) {
                   name
                 }
               }`
-        });
-        setType(machineType);
+        },
+        token);
+        setType(response?.machineType || []);
     }
 
     useEffect(() => {
@@ -109,13 +110,13 @@ export const InsertModalMachines = ({getMachines}) => {
         })
     }
 
-    const onOpenModal = () => {
-        setIsOpen(true);
-        getTypes();
-    }
+    // const onOpenModal = () => {
+    //     setIsOpen(true);
+    //     getTypes();
+    // }
 
     const onCloseModal = () => {
-        setIsOpen(false);
+        setInsertMachine(false);
         setFormValues({
             id: '',
             type: '',
@@ -127,7 +128,7 @@ export const InsertModalMachines = ({getMachines}) => {
 
     const onSubmit = async event  => {
         event.preventDefault();
-        const result = await postMachine(formValues);
+        const result = await postMachine(formValues, token);
         if(result && result.insert_machines.affected_rows === 1){
             getMachines();
             onCloseModal();
@@ -139,9 +140,9 @@ export const InsertModalMachines = ({getMachines}) => {
 
     return (
         <>
-            <button onClick={ onOpenModal } type="button">Add</button>
+            {/* <button onClick={ onOpenModal } type="button">Add</button> */}
             <Modal
-                isOpen={isOpen}
+                isOpen={insertMachine}
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >

@@ -33,7 +33,7 @@ function formatDate(date) {
     return [year, month, day].join('/');
 }
 
-const postRecord = async({id, date, status, machineId, managerId, observation, maintenanceId}) => {
+const postRecord = async({id, date, status, machineId, managerId, observation, maintenanceId}, token) => {
     const query = `mutation ctrlMaintenanceRec {
         insert_controlMaintenanceRecord(
             objects: [{${ id ? `id: ${id},` : ""}
@@ -46,21 +46,21 @@ const postRecord = async({id, date, status, machineId, managerId, observation, m
           affected_rows
         }
       }`
-    const result = await postQuery({query});
+    const result = await postQuery({query}, token);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalRecord = ({getRecord}) => {
+export const InsertModalRecord = ({getRecord, token, insertRecord, setInsertRecord}) => {
 
     const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     const [machine, setMachine] = useState([]);
     const [maintenance, setMaintenance] = useState([]);
 
-    const getMachines = async() => {
-        const {machines} = await postQuery({
+    const getMachines = async(token) => {
+        const response = await postQuery({
             query: `query show_machine {
                 machines(where: {deleted: {_eq: false}}) {
                   id
@@ -70,12 +70,13 @@ export const InsertModalRecord = ({getRecord}) => {
                   deleted
                 }
               }`
-        });
-        setMachine(machines);
+        }, 
+        token);
+        setMachine(response?.machines || []);
     }
 
-    const getMaintenances = async() => {
-        const {maintenances} = await postQuery({
+    const getMaintenances = async(token) => {
+        const response = await postQuery({
             query: `query show_maintenances {
                 maintenances(where: {deleted: {_eq: false}}) {
                   id
@@ -85,13 +86,14 @@ export const InsertModalRecord = ({getRecord}) => {
                   deleted
                 }
               }`
-        });
-        setMaintenance(maintenances);
+        }, 
+        token);
+        setMaintenance(response?.maintenances || []);
     }
 
     useEffect(() => {
-        getMachines();
-        getMaintenances();
+        getMachines(token);
+        getMaintenances(token);
     }, [])
     
     const [formValues, setFormValues] = useState({
@@ -154,14 +156,14 @@ export const InsertModalRecord = ({getRecord}) => {
         })
     }
 
-    const onOpenModal = () => {
-        setIsOpen(true);
-        getMachines();
-        getMaintenances();
-    }
+    // const onOpenModal = () => {
+    //     setIsOpen(true);
+    //     getMachines(token);
+    //     getMaintenances(token);
+    // }
 
     const onCloseModal = () => {
-        setIsOpen(false);
+        setInsertRecord(false);
         setFormValues({
             id: '',
             date: new Date(),
@@ -177,7 +179,7 @@ export const InsertModalRecord = ({getRecord}) => {
     const onSubmit = async event  => {
         event.preventDefault();
 
-        const result = await postRecord(formValues);
+        const result = await postRecord(formValues, token);
         if(result && result.insert_controlMaintenanceRecord.affected_rows === 1){
             getRecord()
             onCloseModal();
@@ -189,9 +191,9 @@ export const InsertModalRecord = ({getRecord}) => {
 
     return (
         <>
-            <button onClick={ onOpenModal } type="button">Add</button>
+            {/* <button onClick={ onOpenModal } type="button">Add</button> */}
             <Modal
-                isOpen={isOpen}
+                isOpen={insertRecord}
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >

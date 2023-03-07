@@ -1,4 +1,4 @@
-import {useMemo, useState} from 'react';
+import {useMemo, useState, useEffect} from 'react';
 import {postQuery} from '../../helpers/postQueries';
 
 import Swal from 'sweetalert2';
@@ -18,21 +18,21 @@ const customStyles = {
 };
 
 
-const postMachineType = async(name) => {
+const postMachineType = async(name, token) => {
     const query = `mutation machineType {
         insert_machineType(objects: [{name: "${name}"}]) {
           affected_rows
         }
       }`
-    const result = await postQuery({ query });
+    const result = await postQuery({ query }, token);
     return result;
 }
 
 Modal.setAppElement('#root');
 
-export const InsertModalMachineTypes = ({getTypes}) => {
+export const InsertModalMachineTypes = ({getTypes, token, insertMachineType, setInsertMachineType}) => {
 
-    const [ isOpen, setIsOpen ] = useState(false);
+    // const [ isOpen, setIsOpen ] = useState(false);
     const [ formSubmitted, setFormSubmitted ] = useState(false);
     
     const [formValues, setFormValues] = useState('');
@@ -50,19 +50,19 @@ export const InsertModalMachineTypes = ({getTypes}) => {
         setFormValues(target.value)
     }
 
-    const onOpenModal = () => {
-        setIsOpen(true);
-    }
+    useEffect(() => {
+        getTypes();
+    }, [])
 
     const onCloseModal = () => {
-        setIsOpen(false);
+        setInsertMachineType(false);
         setFormValues('');
         setFormSubmitted(false);
     }
 
     const onSubmit = async event => {
         event.preventDefault();
-        const result = await postMachineType(formValues);
+        const result = await postMachineType(formValues, token);
         if(result && result.insert_machineType.affected_rows === 1){
             getTypes();
             onCloseModal();
@@ -74,9 +74,9 @@ export const InsertModalMachineTypes = ({getTypes}) => {
 
     return (
         <>
-            <button onClick={ onOpenModal } type="button">Add</button>
+            {/* <button onClick={ onOpenModal } type="button">Add</button> */}
             <Modal
-                isOpen={isOpen}
+                isOpen={insertMachineType}
                 onRequestClose={ onCloseModal }
                 style={customStyles}
             >

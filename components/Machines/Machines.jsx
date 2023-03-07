@@ -5,13 +5,14 @@ import { InsertModalMachines } from './InsertModalMachines';
 import 'sweetalert2/dist/sweetalert2.min.css';
 import { DeleteMachines } from './DeleteMachines';
 
-export const Machines = () => {
+export const Machines = ({token, canWrite}) => {
 
     const [deleted, setDeleted] = useState(false);
     const [machine, setMachine] = useState([]);
+    const [insertMachine, setInsertMachine] = useState(false);
 
     const getMachines = async() => {
-        const {machines} = await postQuery({
+        const response = await postQuery({
             query: `query show_machine {
                 machines(where: {deleted: {_eq: ${deleted}}}) {
                   id
@@ -21,22 +22,24 @@ export const Machines = () => {
                   deleted
                 }
               }`
-        });
-        setMachine(machines);
+        },
+        token);
+        setMachine(response?.machines || []);
     }
 
     useEffect(() => {
         getMachines();
     }, [deleted])
 
-    const delMachine = async(id, deleted) => {
+    const delMachine = async(id, deleted, token) => {
         const result = await postQuery({
             query: `mutation toggleMachines {
             update_machines(where: {id: {_eq: ${id}}}, _set: {deleted: ${!deleted}}) {
                     affected_rows
                 }
             }`
-        });
+        },
+        token);
         const newMachineList = machine.filter( element => element.id !== id );
         setMachine(newMachineList);
     }
@@ -48,7 +51,12 @@ export const Machines = () => {
     return (
         <>
             <h3>Machines</h3>
-            <InsertModalMachines getMachines={getMachines} />
+            {
+              canWrite ? <button onClick={ () => { setInsertMachine(!insertMachine)} } type="button">Add</button> : ''
+            }
+            {
+                insertMachine ? <InsertModalMachines getMachines={getMachines} token={token} insertMachine={insertMachine} setInsertMachine={setInsertMachine}/> : ''
+            }
             <label> Deleted </label>
             <input type="checkbox" checked={deleted} onChange={handleDeleted}/>
             <div>
@@ -71,7 +79,7 @@ export const Machines = () => {
                                         <td> {machine.type} </td>
                                         <td> {machine.location} </td>
                                         <td> {machine.operationStartDate} </td>
-                                        <DeleteMachines id={machine.id} deleted={machine.deleted} delMachine={delMachine}/>
+                                        <DeleteMachines id={machine.id} deleted={machine.deleted} delMachine={delMachine} token={token}/>
                                     </tr>
                                 ))
                             }

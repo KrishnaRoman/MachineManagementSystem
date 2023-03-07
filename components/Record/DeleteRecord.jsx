@@ -1,14 +1,14 @@
-export const DeleteRecord = ({id, deleted, delRecord}) => {
+export const DeleteRecord = ({id, deleted, delRecord, token}) => {
     if (deleted){
         return (
             <td>
-                <button onClick={() => delRecord(id, deleted)} type="button">Restore</button>
+                <button onClick={() => delRecord(id, deleted, token)} type="button">Restore</button>
             </td>
         )
     }else{
         return (
             <td>
-                <button onClick={() => delRecord(id, deleted)} type="button">Delete</button>
+                <button onClick={() => delRecord(id, deleted, token)} type="button">Delete</button>
             </td>
         )
     }   
