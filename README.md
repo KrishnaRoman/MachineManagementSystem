@@ -34,7 +34,7 @@ In the event that the program throws an error during execution, it is necessary 
 
 
 ## How to Use:
-1. Open the localhost: from your browser.
+1. Open the http://localhost:5173/ from your browser.
 2. Go to the login page with the respective credentials and begin the session.
 3. Use the navigation bar in order to find the tables required to enter or see the information
 4. In the moment to leave the web page, go to the navigation bar and click on options, and after that select the option log out.
